@@ -29,6 +29,8 @@ yarn add @nestjstools/messaging @nestjstools/messaging-azure-service-bus-extensi
 
 ---
 
+### Basic Example (Queue Mode)
+
 ```typescript
 import { Module } from '@nestjs/common';
 import { MessagingModule } from '@nestjstools/messaging';
@@ -45,15 +47,52 @@ import { MessagingAzureServiceBusExtensionModule, AzureServiceBusChannelConfig }
             channels: ['azure-channel'],
          },
       ],
-      channels: [
-         new AzureServiceBusChannelConfig({
-            name: 'azure-channel',
-            enableConsumer: true,
-            autoCreate: false, // You need to have admin account to create a queue
-            fullyQualifiedNamespace: 'Endpoint=...',
-            queue: 'azure-queue',
-         }),
+       channels: [
+          new AzureServiceBusChannelConfig({
+             name: 'azure-channel',
+             autoCreate: false, // Requires admin access in Azure to auto-create resources
+             enableConsumer: true, // Needed for `autoCreate` and message consumption
+             connectionString: 'Endpoint=...SharedAccessKey=...',
+             queue: 'azure-queue',
+             // mode: Mode.QUEUE, // Optional: default is 'QUEUE'
+          }),
+       ],
+      debug: true, // Optional: Enable debugging for Messaging operations
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Topic/Subscription Mode (Pub/Sub)
+
+```typescript
+import { Module } from '@nestjs/common';
+import { MessagingModule } from '@nestjstools/messaging';
+import { SendMessageHandler } from './handlers/send-message.handler';
+import { MessagingAzureServiceBusExtensionModule, AzureServiceBusChannelConfig } from '@nestjstools/messaging-azure-service-bus-extension';
+
+@Module({
+  imports: [
+    MessagingAzureServiceBusExtensionModule,
+    MessagingModule.forRoot({
+      buses: [
+         {
+            name: 'azure.bus',
+            channels: ['azure-channel'],
+         },
       ],
+       channels: [
+          new AzureServiceBusChannelConfig({
+             name: 'azure-pubsub-channel',
+             autoCreate: true, // Automatically create topic and subscription (if they don’t exist)
+             enableConsumer: true, // Needed for `autoCreate` and message consumption
+             connectionString: 'Endpoint=...SharedAccessKey=...',
+             topic: 'azure-topic',
+             subscription: 'azure-subscription',
+             mode: Mode.TOPIC,
+          }),
+       ],
       debug: true, // Optional: Enable debugging for Messaging operations
     }),
   ],
@@ -133,15 +172,19 @@ export class CreateUserHandler implements IMessageHandler<CreateUser>{
 
 #### **AzureServiceBusChannelConfig**
 
-| **Property**                  | **Description**                                                                               | **Default Value** |
-|-------------------------------|-----------------------------------------------------------------------------------------------|-------------------|
-| **`name`**                    | The name of the messaging channel within your app (used for internal routing).                |                   |
-| **`fullyQualifiedNamespace`** | Azure service bus credentials (e.g., `Endpoint=sb:...`).                                      |                   |
-| **`enableConsumer`**          | Whether to enable message consumption (i.e., subscribing and processing messages from queue). | `true`            |
-| **`autoCreate`**              | Automatically create the queue, but admin permission is required from IAM                     | `true`            |
-| **`queue`**                   | The name of the queue to publish messages and consume.                                        |                   |
+| **Property**                           | **Description**                                                                                            | **Default Value** |
+|----------------------------------------|------------------------------------------------------------------------------------------------------------|-------------------|
+| **`name`**                             | The name of the messaging channel within your app (used for internal routing).                             |                   |
+| **`connectionString`**                 | Full Azure Service Bus connection string (`Endpoint=sb://...;SharedAccessKeyName=...;...`).                |                   |
+| **`mode`**                             | Messaging mode: `'queue'` (point-to-point) or `'topic'` (publish-subscribe).                               | `Mode.QUEUE`      |
+| **`queue`**                            | The queue name (used in `Mode.QUEUE`).                                                                     |                   |
+| **`topic`**                            | The topic name (used in `Mode.TOPIC`).                                                                     |                   |
+| **`subscription`**                     | The subscription name under the topic (required when `mode` is `TOPIC`).                                   |                   |
+| **`enableConsumer`**                   | Whether to enable message consumption (subscribe and process messages).                                    | `true`            |
+| **`autoCreate`**                       | Automatically create the queue/topic/subscription if not found. Requires Service Bus **admin privileges**. | `false`           |
+| **`middlewares`**                      | Optional array of middleware functions for pre-processing incoming messages.                               | `[]`              |
+| **`avoidErrorsForNotExistedHandlers`** | Ignore errors when a routing key doesn’t match any registered handler.                                     | `false`           |
 
----
 
-## Real world working example with RabbitMQ & Redis - but might be helpful to understand how it works
+### Real world working example with RabbitMQ & Redis - but might be helpful to understand how it works
 https://github.com/nestjstools/messaging-rabbitmq-example

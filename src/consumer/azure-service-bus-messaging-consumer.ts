@@ -5,7 +5,7 @@ import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { MessageConsumer } from '@nestjstools/messaging';
 import { ConsumerDispatchedMessageError } from '@nestjstools/messaging';
 import { ROUTING_KEY_ATTRIBUTE_NAME } from '../const';
-import { MessagingException } from '@nestjstools/messaging/lib/exception/messaging.exception';
+import { ServiceBusReceiver } from '@azure/service-bus';
 
 @Injectable()
 @MessageConsumer(AzureServiceBusChannel)
@@ -14,14 +14,24 @@ export class AzureServiceBusMessagingConsumer implements IMessagingConsumer<Azur
 
   async consume(dispatcher: ConsumerMessageDispatcher, channel: AzureServiceBusChannel): Promise<void> {
     this.channel = channel;
-    const receiver = this.channel.client.createReceiver(this.channel.config.queue);
+    await this.autoCreate();
+    let receiver: ServiceBusReceiver;
+
+    if (this.channel.isQueueMode()) {
+      receiver = this.channel.client.createReceiver(this.channel.getQueue());
+    } else {
+      receiver = this.channel.client.createReceiver(
+        this.channel.getTopic(),
+        this.channel.getSubscription(),
+      );
+    }
 
     receiver.subscribe({
       processMessage: async (message) => {
         const routingKey = message.applicationProperties?.[ROUTING_KEY_ATTRIBUTE_NAME];
 
         if (!routingKey) {
-          throw new MessagingException(`Routing header [${ROUTING_KEY_ATTRIBUTE_NAME}] not found in message attribute`);
+          throw new Error(`Routing header [${ROUTING_KEY_ATTRIBUTE_NAME}] not found in message attribute`);
         }
 
         await dispatcher.dispatch(
@@ -30,13 +40,34 @@ export class AzureServiceBusMessagingConsumer implements IMessagingConsumer<Azur
       },
       processError: async (args) => {
         console.error(
-          `Error occurred with ${args.entityPath} within ${args.fullyQualifiedNamespace}: `,
-          args.error
+          `Error occurred with Azure service bus: ${args.error.message}`,
+          args.error,
         );
       },
     });
 
     return Promise.resolve();
+  }
+
+  async autoCreate(): Promise<void> {
+    if (this.channel.config.autoCreate && this.channel.adminClient && this.channel.isQueueMode()) {
+      const isExists = await this.channel.adminClient.queueExists(this.channel.getQueue());
+      if (!isExists) {
+        await this.channel.adminClient.createQueue(this.channel.getQueue());
+      }
+    }
+
+    if (this.channel.config.autoCreate && this.channel.adminClient && this.channel.isTopicMode()) {
+      const topicExists = await this.channel.adminClient.topicExists(this.channel.getTopic());
+      if (!topicExists) {
+        await this.channel.adminClient.createTopic(this.channel.getTopic());
+      }
+
+      const subscriptionExists = await this.channel.adminClient.subscriptionExists(this.channel.getTopic(), this.channel.getSubscription());
+      if (!subscriptionExists) {
+        await this.channel.adminClient.createSubscription(this.channel.getTopic(), this.channel.getSubscription());
+      }
+    }
   }
 
   async onError(errored: ConsumerDispatchedMessageError, channel: AzureServiceBusChannel): Promise<void> {

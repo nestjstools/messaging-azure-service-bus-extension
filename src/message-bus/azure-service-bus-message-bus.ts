@@ -13,10 +13,6 @@ export class AzureServiceBusMessageBus implements IMessageBus {
   }
 
   async dispatch(message: RoutingMessage): Promise<object | void> {
-    if (this.channel.config.autoCreate && this.channel.adminClient) {
-      await this.channel.adminClient.createQueue(this.channel.config.queue);
-    }
-
     const serviceBusMessage: ServiceBusMessage = {
       body: message.message,
       applicationProperties: {
@@ -24,7 +20,8 @@ export class AzureServiceBusMessageBus implements IMessageBus {
       }
     };
 
-    const sender = this.channel.client.createSender(this.channel.config.queue);
+    const senderName = this.channel.isQueueMode() ? this.channel.getQueue() : this.channel.getTopic();
+    const sender = this.channel.client.createSender(senderName);
 
     try {
       await sender.sendMessages(serviceBusMessage);

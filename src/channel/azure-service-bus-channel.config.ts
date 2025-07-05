@@ -1,14 +1,20 @@
 import { ChannelConfig } from '@nestjstools/messaging';
 
 export class AzureServiceBusChannelConfig extends ChannelConfig {
-  public readonly queue: string;
-  public readonly fullyQualifiedNamespace: string;
+  public readonly mode?: Mode;
+  public readonly queue?: string;
+  public readonly topic?: string;
+  public readonly subscription?: string;
+  public readonly connectionString: string;
   public readonly autoCreate?: boolean;
 
   constructor({
                 name,
                 queue,
-                fullyQualifiedNamespace,
+                mode,
+                topic,
+                subscription,
+                connectionString,
                 autoCreate,
                 enableConsumer,
                 avoidErrorsForNotExistedHandlers,
@@ -17,7 +23,16 @@ export class AzureServiceBusChannelConfig extends ChannelConfig {
               }: AzureServiceBusChannelConfig) {
     super(name, avoidErrorsForNotExistedHandlers, middlewares, enableConsumer, normalizer)
     this.queue = queue;
-    this.fullyQualifiedNamespace = fullyQualifiedNamespace;
-    this.autoCreate = autoCreate ?? true;
+    this.connectionString = connectionString;
+    this.queue = queue ?? Mode.QUEUE;
+    this.mode = mode;
+    this.topic = topic;
+    this.subscription = subscription;
+    this.autoCreate = autoCreate ?? false;
   }
+}
+
+export enum Mode {
+  QUEUE = 'queue',
+  TOPIC = 'topic',
 }

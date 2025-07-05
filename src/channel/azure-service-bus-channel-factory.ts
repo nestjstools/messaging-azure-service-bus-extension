@@ -1,5 +1,5 @@
 import { AzureServiceBusChannel } from './azure-service-bus.channel';
-import {Injectable} from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { ChannelFactory, IChannelFactory } from '@nestjstools/messaging';
 import { AzureServiceBusChannelConfig } from './azure-service-bus-channel.config';
 
