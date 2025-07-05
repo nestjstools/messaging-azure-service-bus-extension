@@ -1,6 +1,6 @@
 {
   "name": "@nestjstools/messaging-azure-service-bus-extension",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Extension to handle messages and dispatch them over Azure service bus",
   "author": "Sebastian Iwanczyszyn",
   "private": false,

@@ -24,8 +24,8 @@ export class AzureServiceBusChannelConfig extends ChannelConfig {
     super(name, avoidErrorsForNotExistedHandlers, middlewares, enableConsumer, normalizer)
     this.queue = queue;
     this.connectionString = connectionString;
-    this.queue = queue ?? Mode.QUEUE;
-    this.mode = mode;
+    this.queue = queue;
+    this.mode = mode ?? Mode.QUEUE;
     this.topic = topic;
     this.subscription = subscription;
     this.autoCreate = autoCreate ?? false;
