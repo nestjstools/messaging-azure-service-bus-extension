@@ -63,4 +63,9 @@ export class AzureServiceBusChannel extends Channel<AzureServiceBusChannelConfig
     }
     return this.config.subscription;
   }
+
+  async onChannelDestroy(): Promise<void> {
+    await this.client.close();
+    return super.onChannelDestroy();
+  }
 }

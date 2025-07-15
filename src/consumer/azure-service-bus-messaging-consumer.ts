@@ -1,7 +1,7 @@
 import { AzureServiceBusChannel } from '../channel/azure-service-bus.channel';
 import { ConsumerMessage, IMessagingConsumer } from '@nestjstools/messaging';
 import { ConsumerMessageDispatcher } from '@nestjstools/messaging';
-import { Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { MessageConsumer } from '@nestjstools/messaging';
 import { ConsumerDispatchedMessageError } from '@nestjstools/messaging';
 import { ROUTING_KEY_ATTRIBUTE_NAME } from '../const';
@@ -10,7 +10,7 @@ import { ServiceBusReceiver } from '@azure/service-bus';
 @Injectable()
 @MessageConsumer(AzureServiceBusChannel)
 export class AzureServiceBusMessagingConsumer
-  implements IMessagingConsumer<AzureServiceBusChannel>, OnApplicationShutdown
+  implements IMessagingConsumer<AzureServiceBusChannel>
 {
   private channel: AzureServiceBusChannel;
 
@@ -102,11 +102,5 @@ export class AzureServiceBusMessagingConsumer
     channel: AzureServiceBusChannel,
   ): Promise<void> {
     return Promise.resolve();
-  }
-
-  async onApplicationShutdown(signal?: string): Promise<any> {
-    if (this.channel) {
-      await this.channel.client.close();
-    }
   }
 }
