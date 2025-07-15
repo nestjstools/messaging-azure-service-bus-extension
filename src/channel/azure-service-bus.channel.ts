@@ -1,6 +1,12 @@
 import { Channel } from '@nestjstools/messaging';
-import { AzureServiceBusChannelConfig, Mode } from './azure-service-bus-channel.config';
-import { ServiceBusAdministrationClient, ServiceBusClient } from '@azure/service-bus';
+import {
+  AzureServiceBusChannelConfig,
+  Mode,
+} from './azure-service-bus-channel.config';
+import {
+  ServiceBusAdministrationClient,
+  ServiceBusClient,
+} from '@azure/service-bus';
 
 export class AzureServiceBusChannel extends Channel<AzureServiceBusChannelConfig> {
   public readonly client: ServiceBusClient;
@@ -11,15 +17,21 @@ export class AzureServiceBusChannel extends Channel<AzureServiceBusChannelConfig
     this.client = new ServiceBusClient(config.connectionString);
 
     if (config.autoCreate) {
-      this.adminClient = new ServiceBusAdministrationClient(config.connectionString);
+      this.adminClient = new ServiceBusAdministrationClient(
+        config.connectionString,
+      );
     }
 
     if (Mode.QUEUE === config.mode && !config.queue) {
-      throw new Error('For [Mode.QUEUE] property `queue` in config must be defined');
+      throw new Error(
+        'For [Mode.QUEUE] property `queue` in config must be defined',
+      );
     }
 
     if (Mode.TOPIC === config.mode && (!config.topic || !config.subscription)) {
-      throw new Error('For [Mode.TOPIC] properties `topic` and `subscription` in config must be defined');
+      throw new Error(
+        'For [Mode.TOPIC] properties `topic` and `subscription` in config must be defined',
+      );
     }
   }
 

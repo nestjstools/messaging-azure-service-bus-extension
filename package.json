@@ -1,6 +1,6 @@
 {
   "name": "@nestjstools/messaging-azure-service-bus-extension",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Extension to handle messages and dispatch them over Azure service bus",
   "author": "Sebastian Iwanczyszyn",
   "private": false,
@@ -37,7 +37,8 @@
   ],
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "prettier:fix": "prettier --write \"src/**/*.ts\"",
+    "prettier": "prettier --check \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
